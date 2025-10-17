@@ -1,8 +1,21 @@
 import os
 import platform
+from datetime import datetime
 
 ip_list_file = 'ips.txt'
-print("--เริ่มการทำงานแล้วนะครับ--")
+log_file = 'ping_log.txt'
+
+#ฟังชั่นการเขียน log ของเรานะ
+def write_log(message):
+    with open(log_file,'a') as file:
+        file.write(message + '\n')
+        
+print("--เริ่มการตรวจสอบสถานะนะครับ;)--")
+
+current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+log_header = f"\n--- ตรวจสอบเมื่อเวลา: {current_time} ---"
+print(log_header)
+write_log(log_header)
 
 with open(ip_list_file , 'r') as file: 
     for ip in file:
@@ -10,41 +23,25 @@ with open(ip_list_file , 'r') as file:
         
         param = '-n 1' if  platform.system().lower() == 'windows' else '-c 1'
         command =f"ping {param} {ip}"
-        response = os.system(command)
+        response = os.system(command + " > NUL")
 
         if response == 0:
-            print(f"{ip} is UP")
+            status = f"{ip} is UP"
         else:
-            print(f"{ip} is DOWN")
+            status = f"{ip} is DOWN"
+        print(status)
+        write_log(status)
 
-print("--การตรวจสอบเสร็จสิ้นแล้วครับ--")
 
-// after to RUN code python dude^^
-usr/local/bin/python3 /Users/bank/Desktop/MINI_PROJECT/ping_tool.py
+print("-- การตรวจสอบเสร็จสิ้นแล้วครับ ผลลัพท์ถูกบันทึกไว้แล้วน้า --")
+
+// after RUN CODE
 bank@MacBook-Air-M2 MINI_PROJECT % /usr/local/bin/python3 /Users/bank/Desktop/MINI_PROJECT/ping_tool.py
---เริ่มการทำงานแล้วนะครับ--
-PING 8.8.8.8 (8.8.8.8): 56 data bytes
-64 bytes from 8.8.8.8: icmp_seq=0 ttl=251 time=15.468 ms
+--เริ่มการตรวจสอบสถานะนะครับ;)--
 
---- 8.8.8.8 ping statistics ---
-1 packets transmitted, 1 packets received, 0.0% packet loss
-round-trip min/avg/max/stddev = 15.468/15.468/15.468/0.000 ms
+--- ตรวจสอบเมื่อเวลา: 2025-10-17 14:09:43 ---
 8.8.8.8 is UP
-PING 192.168.1.1 (192.168.1.1): 56 data bytes
-
---- 192.168.1.1 ping statistics ---
-1 packets transmitted, 0 packets received, 100.0% packet loss
 192.168.1.1 is DOWN
-PING google.com (142.250.204.142): 56 data bytes
-64 bytes from 142.250.204.142: icmp_seq=0 ttl=251 time=14.934 ms
-
---- google.com ping statistics ---
-1 packets transmitted, 1 packets received, 0.0% packet loss
-round-trip min/avg/max/stddev = 14.934/14.934/14.934/0.000 ms
 google.com is UP
-PING 10.0.0.99 (10.0.0.99): 56 data bytes
-
---- 10.0.0.99 ping statistics ---
-1 packets transmitted, 0 packets received, 100.0% packet loss
 10.0.0.99 is DOWN
---การตรวจสอบเสร็จสิ้นแล้วครับ--
+-- การตรวจสอบเสร็จสิ้นแล้วครับ ผลลัพท์ถูกบันทึกไว้แล้วน้า --
