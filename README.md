@@ -1,10 +1,65 @@
-# Project_NETWORK.RNG
+import os
+import platform
+from datetime import datetime
+import requests
 
-สำหรับโปรเจคนี้ที่ผมสร้างนั้นคือ “ระบบที่ไว้เฝ้าระวังสถานะเครือข่ายแบบอัตโนมัติ” สิ่งนี้ก็เปรียบเสมือนการที่มีคนคอยตรวจสอบว่าอุปกรณ์เน็ตเวิร์กหรือเซิร์ฟเวอร์ที่เราสนใจทั้งหมดตามรายชื่อที่เรากำหนดไว้ แล้วกลับมารายงานผลให้เราได้ทราบ
+ip_list_file = 'ips.txt'
+log_file = 'ping_log.txt'
+Discord_WEBHOOK_Url = 'https://discord.com/api/webhooks/1428651407069675550/eWVzqrJtXJQM1lVv_GKqSTLCyLBcdsR5fEGjgA6lszCtmSqp8lPMQ_c8F4CUtVy3Qp58'
 
-หน้าที่หลักของโปรเจคนี้ก็คือ 
-1. การเข้าถึงการอ่านไฟล์ เพื่อที่จะแน่ใจว่าสิ่งที่เราจะไปตรวจสอบนั้น ตรวจสอบเครือข่ายใดบ้าง ทำให้เรานั้น สามารถเพิ่มหรือลดจำนวนของเป้าหมายนั้นได้ง่าย จากไฟล์ .txtที่เรานั้นสร้างไว้
-2. ทดสอบคำสั่ง ping โดยการนำรายชื่อที่เราสร้างและบันทึกเอาไว้ใน .txt คำสั่งนี้เพื่อเช็คว่า อุปกรณ์เน็ตเวิร์กหรือเซิร์ฟเวอร์ นั้นยังอยู่ดีหรือเปล่า
-3. การตรวจสอบและการตัดสินใจสถานะ โดยหลังจากที่คำสั่ง ping ทำงานนั้น ทางสถานะก็จะรอผลลัพท์กลับมาเพื่อที่จะ ตัดสินใจว่าเป้าหมายนั้น UP(ออนไลน์) หรือ DOWN(ออฟไลน์)
-4. บันทึกผลลัพท์ เราจะใช้ ping_log.txt ที่คอยบันทึกค่า UP/DOWN ต่างๆพร้อมกับระบุเวลาที่ตรวจสอบ เพื่อทำให้เรานั้นสามารถดูประวัติย้อนหลังได้
-5. ส่วนสุดท้ายคือการแจ้งเตือน ถ้าเกิดในช่วงเวลาหนึ่ง สถานะของอุปกรณ์เน็ตเวิร์กหรือเซิร์ฟเวอร์นั้น DOWN การแจ้งเตือนนี้จะส่งไปที่ appilcation สำหรับการแจ้งเตือนเช่น (Discord Webhook) ทันที เพื่อที่จะ ทำให้เรารู้ตัวและสามารถเข้าไปแก้ไขปัญหาได้อย่างรวดเร็ว
+#ฟังชั่นการเขียน log ของเรานะ
+def write_log(message):
+    with open(log_file,'a') as file:
+        file.write(message + '\n')
+
+def send_discord_webhook(message):
+
+    if not Discord_WEBHOOK_Url:
+        print(" -- ยังไม่ได้ตั้งค่า discord นะจ๊ะ!!!")
+        return
+    
+    data = {
+         'content': message,
+         'username': 'Network Monitor Bot'
+     }
+    try:
+        response = requests.post(Discord_WEBHOOK_Url,json=data)
+        if response.status_code != 204:
+            print(f" --ส่งdiscordไม่สำเร็จนะจ๊ะ!!!--:{response.text}")
+    except Exception as e:
+        print(f"-- เกิดข้อผิดพลาดในการส่ง discordนะจ๊ะ!!:{e} --")
+        
+print("--เริ่มการตรวจสอบสถานะนะครับ;)--")
+
+current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+log_header = f"\n--- ตรวจสอบเมื่อเวลา: {current_time} ---"
+print(log_header)
+write_log(log_header)
+
+with open(ip_list_file , 'r') as file: 
+    for ip in file:
+        ip = ip.strip()
+        
+        param = '-n 1' if  platform.system().lower() == 'windows' else '-c 1'
+        command =f"ping {param} {ip}"
+        response = os.system(command + " > NUL")
+
+        if response == 0:
+            status = f"{ip} is UP"
+        else:
+            status = f"{ip} is DOWN"
+            notification_message =f" แจ้งเตือนด่วนนน \nพบว่า {ip} อยู่ในสถานนะDOWN!!"
+            send_discord_webhook(notification_message)
+        print(status)
+        write_log(status)
+
+print("-- การตรวจสอบเสร็จสิ้นแล้วครับ ผลลัพท์ถูกบันทึกไว้แล้วน้า --")
+
+// after for run code 
+
+-- ตรวจสอบเมื่อเวลา: 2025-10-17 16:19:28 ---
+8.8.8.8 is UP
+192.168.1.1 is DOWN
+google.com is UP
+10.0.0.99 is DOWN
+-- การตรวจสอบเสร็จสิ้นแล้วครับ ผลลัพท์ถูกบันทึกไว้แล้วน้า --
